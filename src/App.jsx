@@ -4,6 +4,7 @@ import "./App.css";
 
 function App() {
   // axios.defaults.headers.common['Authorization'] = `Bearer ${import.meta.env.VITE_GITHUB_TOKEN}`;
+  // console.log(import.meta.env.VITE_GITHUB_TOKEN);
   //存放userName
   const [userName, setUserName] = useState("");
   //存放專案
@@ -35,7 +36,7 @@ function App() {
       })
       .catch((error) => {
         console.log(error);
-        setRepo("");
+        setRepo([]);
       });
   };
 
@@ -50,69 +51,174 @@ function App() {
   }
 
   //送出追蹤
-  const handleSearchData=(e)=>{
-    e.preventDefault();
-    console.log(searchData);
+  // const handleSearchData=(e)=>{
+  //   e.preventDefault();
+  //   console.log(searchData);
 
-    //送出查詢
-    axios
-      .get(`https://api.github.com/repos/${searchData.username}/${searchData.repo}/branches`)
-      .then((res) => {
-        // console.log(res);
-        // setRepo(res.data);
-        let branch=res.data.filter(item=>item.name.slice(0,3)==="pra");
-        //把分支丟到branchs中
-        setBranchs(branch);
-        console.log(res);
+  //   //送出查詢
+  //   axios
+  //     .get(`https://api.github.com/repos/${searchData.username}/${searchData.repo}/branches`)
+  //     .then((res) => {
+  //       // console.log(res);
+  //       // setRepo(res.data);
+  //       let branch=res.data.filter(item=>item.name.slice(0,3)==="pra");
+  //       //把分支丟到branchs中
+  //       setBranchs(branch);
+  //       console.log(res);
 
-        //抓分支的開始結束時間，丟到commitDetail
-        branch.forEach((item)=>{
-          axios.get(`https://api.github.com/repos/${searchData.username}/${searchData.repo}/commits?sha=${item.name}&per_page=1000`)
-            .then((res)=>{
-              // console.log(res);
-              let datas=res.data;
-              let startDT="";
-              let endDT="";
-              datas.forEach((data)=>{
-                // console.log(data);
-                let message=data.commit.message;
-                let date=new Date(data.commit.committer.date);
-                if(message.slice(0,5)==="START"){
-                  startDT=date;
-                }
-                if(message.slice(0,4)==="DONE"){
-                  endDT=date;
-                }
+  //       //抓分支的開始結束時間，丟到commitDetail
+  //       branch.forEach((item)=>{
+  //         axios.get(`https://api.github.com/repos/${searchData.username}/${searchData.repo}/commits?sha=${item.name}&per_page=1000`)
+  //           .then((res)=>{
+  //             // console.log(res);
+  //             let datas=res.data;
+  //             let startDT="";
+  //             let endDT="";
+  //             datas.forEach((data)=>{
+  //               // console.log(data);
+  //               let message=data.commit.message;
+  //               let date=new Date(data.commit.committer.date);
+  //               if(message.slice(0,5)==="START"){
+  //                 startDT=date;
+  //               }
+  //               if(message.slice(0,4)==="DONE"){
+  //                 endDT=date;
+  //               }
                 
-              })
-              console.log(`開始時間：${startDT}`);
-              console.log(`結束時間：${endDT}`);
+  //             })
+  //             console.log(`開始時間：${startDT}`);
+  //             console.log(`結束時間：${endDT}`);
 
-              const diffMs = endDT - startDT; // 直接相減也可以
-              console.log(`間隔時間：${diffMs}`)
-              const diffMinutes = Math.floor(diffMs / (1000 * 60));
-              const hours = Math.floor(diffMinutes / 60);
-              const minutes = diffMinutes % 60;
-              const diffDT=`${hours} 小時 ${minutes} 分鐘`;
-              console.log(`${hours} 小時 ${minutes} 分鐘`); // 5 小時 30 分鐘
-              setCommitDetail({
-                ...commitDetail,
-                startDT:startDT.toLocaleString(),
-                endDT:endDT.toLocaleString(),
-                diffDT
-              })
-              console.log(commitDetail);
-              // let date=res.data.commit.committer.date;
+  //             const diffMs = endDT - startDT; // 直接相減也可以
+  //             console.log(`間隔時間：${diffMs}`)
+  //             const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  //             const hours = Math.floor(diffMinutes / 60);
+  //             const minutes = diffMinutes % 60;
+  //             const diffDT=`${hours} 小時 ${minutes} 分鐘`;
+  //             console.log(`${hours} 小時 ${minutes} 分鐘`); // 5 小時 30 分鐘
+  //             setCommitDetail({
+  //               ...commitDetail,
+  //               startDT:startDT.toLocaleString(),
+  //               endDT:endDT.toLocaleString(),
+  //               diffDT
+  //             })
+  //             console.log(commitDetail);
+  //             // let date=res.data.commit.committer.date;
               
-        })
-            .catch((error)=>console.log(error))
-        })
-      })
-      .catch((error) => {
-        console.log(error);
-        setBranchs("");
-      });
+  //       })
+  //           .catch((error)=>console.log(error))
+  //       })
+  //     })
+  //     .catch((error) => {
+  //       console.log(error);
+  //       setBranchs("");
+  //     });
+  // }
+  // App.js (僅展示 handleSearchData 函式)
+
+// 為了正確追蹤每個分支的結果，我們需要調整狀態：
+// 移除 commitDetail (單一物件)，改為 results 陣列
+const [results, setResults] = useState([]); 
+// ... 其他狀態 (userName, repo, searchData, branchs)
+
+// 送出追蹤
+const handleSearchData = async (e) => {
+  e.preventDefault();
+  
+  // 1. **數據獲取 (分支列表)**
+  try {
+    const branchesResponse = await axios.get(
+      `https://api.github.com/repos/${searchData.username}/${searchData.repo}/branches`
+    );
+    
+    // 篩選出符合規定的分支 (例如 'pra' 開頭)
+    const allBranches = branchesResponse.data;
+    const practiceBranches = allBranches.filter(item => item.name.slice(0, 3) === "pra");
+    setBranchs(practiceBranches);
+
+    if (practiceBranches.length === 0) {
+      setResults([]);
+      console.log("未找到符合 'pra' 開頭的練習分支。");
+      return;
+    }
+
+    // 2. **並行處理所有分支的 Commit 請求 (核心優化)**
+    // 使用 Promise.all 確保所有分支的計算都完成
+    const calculationPromises = practiceBranches.map(async (branch) => {
+      try {
+        const commitResponse = await axios.get(
+          `https://api.github.com/repos/${searchData.username}/${searchData.repo}/commits?sha=${branch.name}&per_page=1000`
+        );
+        
+        // 3. **計算 T_start, T_end 與時長**
+        const datas = commitResponse.data;
+        let startDT = null; // 初始化為 null
+        let endDT = null;   // 初始化為 null
+        
+        datas.forEach((data) => {
+          const message = data.commit.message.toUpperCase(); // 轉大寫進行比對
+          const date = new Date(data.commit.committer.date);
+
+          // 尋找最早的 START: (您的程式碼邏輯)
+          if (message.startsWith("START")) {
+            if (startDT === null || date < startDT) {
+                 startDT = date;
+            }
+          }
+          
+          // 尋找最晚的 DONE: (您的程式碼邏輯)
+          if (message.startsWith("DONE")) {
+             if (endDT === null || date > endDT) {
+                 endDT = date;
+            }
+          }
+        });
+        
+        // 處理時間計算
+        if (!startDT || !endDT || endDT <= startDT) {
+             return { name: branch.name, error: "無法確定有效的 START/DONE 時間。" };
+        }
+
+        const diffMs = endDT.getTime() - startDT.getTime();
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        const hours = Math.floor(diffMinutes / 60);
+        const minutes = diffMinutes % 60;
+        const diffDT = `${hours} 小時 ${minutes} 分鐘`;
+        
+        // 返回包含該分支所有結果的物件
+        return {
+          name: branch.name,
+          startDT: startDT.toLocaleString(),
+          endDT: endDT.toLocaleString(),
+          diffDT: diffDT,
+        };
+        
+
+      } catch (error) {
+        console.error(`Error fetching commits for ${branch.name}:`, error);
+        return { name: branch.name, error: "API 請求失敗。" };
+      }
+    });
+    // 4. **等待所有計算完成，並更新單一狀態**
+    const allResults = await Promise.all(calculationPromises);
+    
+    // 過濾掉錯誤的結果，只顯示成功的結果
+    setResults(allResults.filter(r => !r.error)); 
+    console.log("所有分支結果:", allResults.filter(r => !r.error));
+    setCommitDetail({
+                ...commitDetail,
+                startDT:allResults[0].startDT,
+                endDT:allResults[0].endDT,
+                diffDT:allResults[0].diffDT
+              })
+
+  } catch (error) {
+    console.error("Error fetching branches:", error);
+    setBranchs([]);
+    setResults([]);
+    // 可以在這裡設定一個錯誤訊息狀態，在介面顯示
   }
+};
 
   return (
     <>
