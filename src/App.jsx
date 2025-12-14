@@ -4,7 +4,6 @@ import "./App.css";
 
 function App() {
   // axios.defaults.headers.common['Authorization'] = `Bearer ${import.meta.env.VITE_GITHUB_TOKEN}`;
-  // console.log(import.meta.env.VITE_GITHUB_TOKEN);
   //存放userName
   const [userName, setUserName] = useState("");
   //存放專案
@@ -13,7 +12,8 @@ function App() {
   const [searchData,setSearchData]= useState({});
   //存放分支commit
   const [branchs,setBranchs]=useState([]);
-  const[commitDetail,setCommitDetail]=useState({});
+  // 保留這個陣列，它將儲存所有計算結果
+  const [results, setResults] = useState([]);
 
   //更新顯示的userName
   const handleUserNameChange = (e) => {
@@ -117,8 +117,7 @@ function App() {
   // App.js (僅展示 handleSearchData 函式)
 
 // 為了正確追蹤每個分支的結果，我們需要調整狀態：
-// 移除 commitDetail (單一物件)，改為 results 陣列
-const [results, setResults] = useState([]); 
+
 // ... 其他狀態 (userName, repo, searchData, branchs)
 
 // 送出追蹤
@@ -205,12 +204,7 @@ const handleSearchData = async (e) => {
     // 過濾掉錯誤的結果，只顯示成功的結果
     setResults(allResults.filter(r => !r.error)); 
     console.log("所有分支結果:", allResults.filter(r => !r.error));
-    setCommitDetail({
-                ...commitDetail,
-                startDT:allResults[0].startDT,
-                endDT:allResults[0].endDT,
-                diffDT:allResults[0].diffDT
-              })
+
 
   } catch (error) {
     console.error("Error fetching branches:", error);
@@ -310,16 +304,18 @@ const handleSearchData = async (e) => {
               </thead>
               <tbody>
                 {
-                  branchs?(
-                    branchs.map((branch)=>{
-                      return <tr>
-                      <td>{branch.name}</td>
-                      <td>{commitDetail.startDT}</td>
-                      <td>{commitDetail.endDT}</td>
-                      <td>{commitDetail.diffDT}</td>
-                      </tr>
+                  results.length > 0?(
+                    results.map((item) => {
+                      // item 已經是包含所有時間數據的單獨結果物件
+                      return (
+                        <tr key={item.name}>
+                          <td>{item.name}</td>
+                          <td>{item.startDT || 'N/A'}</td>
+                          <td>{item.endDT || 'N/A'}</td>
+                          <td>{item.diffDT || '計算錯誤'}</td>
+                        </tr>
+                      );
                     })
-                    
                   ):(<></>)
                 }
 
