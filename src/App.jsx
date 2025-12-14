@@ -3,14 +3,16 @@ import axios from "axios";
 import "./App.css";
 
 function App() {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${import.meta.env.VITE_GITHUB_TOKEN}`;
   //存放userName
-  const [userName, setUserName] = useState("liwenchio");
+  const [userName, setUserName] = useState("");
   //存放專案
   const [repo, setRepo] = useState([]);
   //存放查詢條件
   const [searchData,setSearchData]= useState({});
   //存放分支commit
   const [branchs,setBranchs]=useState([]);
+  const[commitDetail,setCommitDetail]=useState({});
 
   //更新顯示的userName
   const handleUserNameChange = (e) => {
@@ -51,15 +53,60 @@ function App() {
   const handleSearchData=(e)=>{
     e.preventDefault();
     console.log(searchData);
+
     //送出查詢
     axios
       .get(`https://api.github.com/repos/${searchData.username}/${searchData.repo}/branches`)
       .then((res) => {
         // console.log(res);
         // setRepo(res.data);
+        let branch=res.data.filter(item=>item.name.slice(0,3)==="pra");
         //把分支丟到branchs中
-        setBranchs(res.data);
+        setBranchs(branch);
         console.log(res);
+
+        //抓分支的開始結束時間，丟到commitDetail
+        branch.forEach((item)=>{
+          axios.get(`https://api.github.com/repos/${searchData.username}/${searchData.repo}/commits?sha=${item.name}&per_page=1000`)
+            .then((res)=>{
+              // console.log(res);
+              let datas=res.data;
+              let startDT="";
+              let endDT="";
+              datas.forEach((data)=>{
+                // console.log(data);
+                let message=data.commit.message;
+                let date=new Date(data.commit.committer.date);
+                if(message.slice(0,5)==="START"){
+                  startDT=date;
+                }
+                if(message.slice(0,4)==="DONE"){
+                  endDT=date;
+                }
+                
+              })
+              console.log(`開始時間：${startDT}`);
+              console.log(`結束時間：${endDT}`);
+
+              const diffMs = endDT - startDT; // 直接相減也可以
+              console.log(`間隔時間：${diffMs}`)
+              const diffMinutes = Math.floor(diffMs / (1000 * 60));
+              const hours = Math.floor(diffMinutes / 60);
+              const minutes = diffMinutes % 60;
+              const diffDT=`${hours} 小時 ${minutes} 分鐘`;
+              console.log(`${hours} 小時 ${minutes} 分鐘`); // 5 小時 30 分鐘
+              setCommitDetail({
+                ...commitDetail,
+                startDT:startDT.toLocaleString(),
+                endDT:endDT.toLocaleString(),
+                diffDT
+              })
+              console.log(commitDetail);
+              // let date=res.data.commit.committer.date;
+              
+        })
+            .catch((error)=>console.log(error))
+        })
       })
       .catch((error) => {
         console.log(error);
@@ -161,9 +208,9 @@ function App() {
                     branchs.map((branch)=>{
                       return <tr>
                       <td>{branch.name}</td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
+                      <td>{commitDetail.startDT}</td>
+                      <td>{commitDetail.endDT}</td>
+                      <td>{commitDetail.diffDT}</td>
                       </tr>
                     })
                     

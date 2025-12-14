@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# 1. 忽略所有名為 .env 的檔案（標準做法）
+.env
+# 2. 使用否定模式 (Negation Pattern) 重新追蹤 .env.example
+!*.example
