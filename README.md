@@ -1,16 +1,67 @@
-# React + Vite
+# 📖 Git 練功房 (Git Practice Tracker) 使用說明 🎯
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 應用程式目的
+本工具旨在透過分析您 GitHub 專案中特定分支的 Commit 歷史，自動計算您在各項課程練習上所投入的總時長，協助您追蹤學習進度和效率。
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 1. 核心工作流程約定：如何讓程式讀懂時間
+您的 Git 操作必須遵循以下 3 個規範，否則程式無法識別哪些分支要計算，以及計算的起點和終點。
 
-## React Compiler
+### 步驟 1: 分支命名規範 (篩選)
+只有符合此約定的分支會被程式追蹤和統計。  
+**約定模式：** 分支名稱必須以 `pra` 開頭（程式碼中設定）。
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+範例：
+- ✅ `pra-week3-hooks`
+- ✅ `practice/redux-module`
+- ❌ `feature/login-fix` (會被忽略)
 
-## Expanding the ESLint configuration
+### 步驟 2: Commit 標籤規範 (計時)
+您必須在練習的 **第一個** 和 **最後一個** Commit 中使用特定的標籤：
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+| 標籤 | 時機 | 程式碼識別關鍵字 | 意義 |
+|------|------|-----------------|------|
+| START | 開始一個練習時的第一個 Commit | `START:` | 標記 **T_start** (起始時間) |
+| DONE  | 完成該練習時的最後一個 Commit | `DONE:`  | 標記 **T_end** (結束時間) |
+
+### 步驟 3: Git 實際操作範例
+開始一個新練習的標準流程如下：
+
+```bash
+# 切換新分支
+git checkout -b pra-new-feature
+
+# 立即標記開始
+git commit --allow-empty -m "START: 開始實作新的自定義 Hook"
+
+# (中間正常練習並提交...)
+
+# 最後標記結束
+git commit -m "DONE: 所有功能測試通過，練習完成"
+git push origin pra-new-feature
+```
+---
+## 2. 應用程式操作指南
+### 2.1 設定與追蹤
+- 輸入 GitHub Username： 在「GitHub Username」欄位輸入您的帳號。
+- 點擊「驗證」： 系統會檢查帳號是否正確，驗證成功後才會顯示您的使用者頭像以及專案列表。
+- 選擇專案： 從下拉選單中選擇您要追蹤的包含練習分支的專案。
+- 點擊「開始追蹤」：
+    - 若尚未驗證，系統會跳出「請先驗證」的提示訊息。
+    - 驗證成功後，系統將執行以下操作：
+        - 獲取該專案所有分支
+        - 篩選出所有以 pra 開頭的分支
+        - 並行查詢每個分支的 Commit 歷史，尋找 START: 和 DONE: 標籤
+        - 計算每次練習的開始、結束、完成時間
+        - 顯示最佳成績
+
+### 2.2 結果解讀
+在「追蹤結果」區塊，您將看到一份詳盡的表格：
+- 練習分支： 符合 pra 命名約定的分支名稱
+- 開始時間： 該分支中最舊的 START: Commit 時間
+- 結束時間： 該分支中最新的 DONE: Commit 時間
+- 完成時長： 兩個時間戳記之間的總經過時長（格式：HH 小時 MM 分鐘）
+- 最佳成績： 所有練習中耗時最短的一次結果
+
+<a href="https://ibb.co/BKPKMKnN"><img src="https://i.ibb.co/wrLrmrcs/image.png" alt="image" border="0"></a>
