@@ -129,13 +129,13 @@ function App() {
     // 1. **數據獲取 (分支列表)**
     try {
       const branchesResponse = await axios.get(
-        `https://api.github.com/repos/${searchData.username}/${searchData.repo}/branches`
+        `https://api.github.com/repos/${searchData.username}/${searchData.repo}/branches`,
       );
 
       // 篩選出符合規定的分支 (例如 'pra' 開頭)
       const allBranches = branchesResponse.data;
       const practiceBranches = allBranches.filter(
-        (item) => item.name.slice(0, 3) === "pra"
+        (item) => item.name.slice(0, 3) === "pra",
       );
       setBranchs(practiceBranches);
 
@@ -150,7 +150,7 @@ function App() {
       const calculationPromises = practiceBranches.map(async (branch) => {
         try {
           const commitResponse = await axios.get(
-            `https://api.github.com/repos/${searchData.username}/${searchData.repo}/commits?sha=${branch.name}&per_page=1000`
+            `https://api.github.com/repos/${searchData.username}/${searchData.repo}/commits?sha=${branch.name}&per_page=1000`,
           );
 
           // 3. **計算 T_start, T_end 與時長**
@@ -218,12 +218,12 @@ function App() {
       setResults(allResults.filter((r) => !r.error));
       console.log(
         "所有分支結果:",
-        allResults.filter((r) => !r.error)
+        allResults.filter((r) => !r.error),
       );
 
       //抓出最佳時間
       const minProduct = allResults.reduce((min, item) =>
-        item.diffMS < min.diffMS ? item : min
+        item.diffMS < min.diffMS ? item : min,
       );
       // console.log(minProduct);
       setgreatScore(minProduct);
@@ -347,11 +347,11 @@ function App() {
                 <h2 className="h5 mb-3">最佳結果</h2>
                 {Object.keys(greatScore).length > 0 ? (
                   <div className="card" key={greatScore.name}>
-                      <img
-                        src="https://images.unsplash.com/photo-1527871369852-eb58cb2b54e2?q=80&w=1331&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                        className="card-img-top"
-                        alt="獎盃"
-                      />
+                    <img
+                      src="https://images.unsplash.com/photo-1527871369852-eb58cb2b54e2?q=80&w=1331&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+                      className="card-img-top"
+                      alt="獎盃"
+                    />
 
                     <div className="card-body">
                       <h5 className="card-title">{greatScore.name}</h5>
