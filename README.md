@@ -1,5 +1,5 @@
 # 📖 Git 練功房 (Git Practice Tracker) 使用說明 🎯
-
+DEMO: https://liwenchiou.github.io/git-practice-tracker/
 ## 應用程式目的
 本工具旨在透過分析您 GitHub 專案中特定分支的 Commit 歷史，自動計算您在各項課程練習上所投入的總時長，協助您追蹤學習進度和效率。
 
